@@ -4,11 +4,6 @@ import VoxelWorld from './Voxelworld.js'; //library for Voxel world
 import {perlin_noise} from './noise.js';
 //import {addLight} from './light'
 
-// We need 3 things everytime we use Three.js
-// import scene (for holding object), camera and renderer (rasterization)
-
-
-
 /*
 Global variable
 */
@@ -28,7 +23,6 @@ Scene setting
 const scene = new THREE.Scene()
 scene.background = new THREE.Color('lightblue');
 
-
 /*
 Camera setting
 */
@@ -38,7 +32,6 @@ const near = 0.1;
 const far = 1000;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 camera.position.set(-cellSize * .3, cellSize * .8, -cellSize * .3);
-
 
 /*
 Orbit control
@@ -56,14 +49,11 @@ window.addEventListener( 'resize', () => {
 	camera.updateProjectionMatrix()
 })
 
-for (let i=0;i<5;i++){
-    let val = perlin_noise(new THREE.Vector2(i/32,i*3.2));
-    console.log('noise val',val);
-}
-
+/* 
+Vortex generation with 2D perlin noise
+*/
 
 const world = new VoxelWorld(cellSize);
-
 
 for (let y = 0; y < cellSize; ++y) {
     for (let z = 0; z < cellSize; ++z) {
@@ -93,10 +83,10 @@ for (let y = 0; y < cellSize; ++y) {
   const mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
 
-
 /*
 Mesh creation and rendering
 */
+
 //add red cube in center
 var geometry_cube = new THREE.BoxGeometry( 1, 1, 1) //create a cube
 var material_cube = new THREE.MeshStandardMaterial( { color: 0xff0051 })//color of cube, MeshStandardMaterial can interact with light
@@ -111,12 +101,10 @@ var material_WC = new THREE.MeshBasicMaterial( {
 var wireframeCube = new THREE.Mesh ( geometry_WC, material_WC )
 scene.add( wireframeCube )
 
-
-
-
 /*
 Lighting
 */
+
 var ambientLight = new THREE.AmbientLight ( 0xffffff, 0.5) //ambient light source
 scene.add( ambientLight ) //add ambient light
 
