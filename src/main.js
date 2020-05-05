@@ -62,6 +62,19 @@ var pointLight = new THREE.PointLight( 0xffffff, 1 ); //point light source
 pointLight.position.set( 25, 50, 25 ); //set light source position
 scene.add( pointLight ); //add point light
 
+/*
+Texture
+*/
+
+const loader = new THREE.TextureLoader();
+const texture = loader.load('../textures/textures.png', ()=>renderer.render(scene, camera));
+texture.magFilter = THREE.NearestFilter;
+texture.minFilter = THREE.NearestFilter;
+
+/*
+Draw
+*/
+
 function drawWorld(scene, new_x, new_z){
   base_x = new_x;
   base_z = new_z;
@@ -77,7 +90,15 @@ function drawWorld(scene, new_x, new_z){
   /* 
   Vortex generation with 2D perlin noise
   */
-  const world = new VoxelWorld(cellSize * worldSize);
+ const tileSize = 16;
+ const tileTextureWidth = 256;
+ const tileTextureHeight = 64;
+ const world = new VoxelWorld({
+   cellSize,
+   tileSize,
+   tileTextureWidth,
+   tileTextureHeight,
+ });
 
   for (let y = 0; y < cellSize * worldHeight; ++y) {
     for (let z = 0; z < cellSize * worldSize; ++z) {
@@ -85,30 +106,36 @@ function drawWorld(scene, new_x, new_z){
         const point = new THREE.Vector2(x / cellSize - base_x, z / cellSize - base_z);
         const height = perlin_noise(point) * cellSize;
 
-        if (y < height) {
+        if (y < height && y+2 > height){
           world.setVoxel(x, y, z, 1);
+        }
+        else if (y < height) {
+          world.setVoxel(x, y, z, 2);
         }
       }
     }
   }
-  const {
-    positions,
-    normals,
-    indices
-  } = world.generateGeometryDataForCell(0, 0, 0);
+  const {positions, normals, uvs, indices} = world.generateGeometryDataForCell(0, 0, 0);
   const geometry = new THREE.BufferGeometry();
   const material = new THREE.MeshLambertMaterial({
-    color: 'green'
+    map: texture,
+    side: THREE.DoubleSide,
+    alphaTest: 0.1,
+    transparent: true,
   });
 
   const positionNumComponents = 3;
   const normalNumComponents = 3;
+  const uvNumComponents = 2;
   geometry.setAttribute(
     'position',
     new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
   geometry.setAttribute(
     'normal',
     new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
+  geometry.setAttribute(
+    'uv',
+    new THREE.BufferAttribute(new Float32Array(uvs), uvNumComponents));
   geometry.setIndex(indices);
   const mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
