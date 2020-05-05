@@ -8,6 +8,8 @@ import {perlin_noise} from './noise.js';
 Global variable
 */
 const cellSize = 32;
+const worldSize = 5;
+const worldHeight = 2;
 
 /*
 Renderer/ screen setting
@@ -52,36 +54,41 @@ window.addEventListener( 'resize', () => {
 /* 
 Vortex generation with 2D perlin noise
 */
+const world = new VoxelWorld(cellSize * worldSize);
 
-const world = new VoxelWorld(cellSize);
+for (let y = 0; y < cellSize * worldHeight; ++y) {
+  for (let z = 0; z < cellSize * worldSize; ++z) {
+    for (let x = 0; x < cellSize * worldSize; ++x) {
+      const point = new THREE.Vector2(x / cellSize, z / cellSize);
+      const height = perlin_noise(point) * cellSize;
 
-for (let y = 0; y < cellSize; ++y) {
-    for (let z = 0; z < cellSize; ++z) {
-      for (let x = 0; x < cellSize; ++x) {
-        const point = new THREE.Vector2(x/cellSize ,z/cellSize);
-        const height = perlin_noise(point)*cellSize;
-
-        if (y < height) {
-          world.setVoxel(x, y, z, 1);
-        }
+      if (y < height) {
+        world.setVoxel(x, y, z, 1);
       }
     }
   }
-  const {positions, normals, indices} = world.generateGeometryDataForCell(0, 0, 0);
-  const geometry = new THREE.BufferGeometry();
-  const material = new THREE.MeshLambertMaterial({color: 'green'});
+}
+const {
+  positions,
+  normals,
+  indices
+} = world.generateGeometryDataForCell(0, 0, 0);
+const geometry = new THREE.BufferGeometry();
+const material = new THREE.MeshLambertMaterial({
+  color: 'green'
+});
 
-  const positionNumComponents = 3;
-  const normalNumComponents = 3;
-  geometry.setAttribute(
-      'position',
-      new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
-  geometry.setAttribute(
-      'normal',
-      new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
-  geometry.setIndex(indices);
-  const mesh = new THREE.Mesh(geometry, material);
-  scene.add(mesh);
+const positionNumComponents = 3;
+const normalNumComponents = 3;
+geometry.setAttribute(
+  'position',
+  new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
+geometry.setAttribute(
+  'normal',
+  new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
+geometry.setIndex(indices);
+const mesh = new THREE.Mesh(geometry, material);
+scene.add(mesh);
 
 /*
 Mesh creation and rendering
