@@ -11,7 +11,7 @@ const CHUNK_SIZE = 32;
 const WORLD_SIZE = 5;
 const WORLD_HEIGHT = 64;
 const HEIGHT_MULTIPLIER = 32;
-const RENDER_DISTANCE = 1;
+const RENDER_DISTANCE = 3;
 /*
 Renderer/ screen setting
 */
@@ -138,11 +138,20 @@ renderChunksAroundCamera()
 
 renderer.render( scene, camera ) //render and show it on screen
 
-/*
-Animation of cube
-*/
+function removeFarAwayChunks(){
+  for (let x_values in chunks){
+    for (let z_values in chunks[x_values]){
+      let camera_chunk_x = Math.floor(camera.position.x / CHUNK_SIZE);
+      let camera_chunk_z = Math.floor(camera.position.z / CHUNK_SIZE);
+      if (Math.abs(x_values - camera_chunk_x) > RENDER_DISTANCE * 1.5 || Math.abs(z_values - camera_chunk_z) > RENDER_DISTANCE * 1.5)
+        scene.remove(chunks[x_values][z_values])
+    }
+  }
+}
+
 
 function renderChunksAroundCamera(){
+  removeFarAwayChunks();
   let camera_chunk_x = Math.floor(camera.position.x / CHUNK_SIZE);
   let camera_chunk_z = Math.floor(camera.position.z / CHUNK_SIZE);
   for (let x = -RENDER_DISTANCE; x < RENDER_DISTANCE; ++x){
@@ -152,33 +161,9 @@ function renderChunksAroundCamera(){
   }
 }
 
-function updateCameraPosition(camera) {
-  if (camera.position.x > 50){
-    drawChunk(scene, chunks, 32, 0)
-  }
-  // if (camera.position.z > 50){
-  //   camera.position.z -= 50
-  //   controls.target.z -= 50
-  //   drawWorld(scene, base_x, base_z - 50/chunkSize)
-  // }
-
-  // if (camera.position.x < -10){
-  //   camera.position.x += 50
-  //   controls.target.x += 50
-  //   drawWorld(scene, base_x + 50/chunkSize, base_z)
-  // }
-  // if (camera.position.z < -10){
-  //   camera.position.z += 50
-  //   controls.target.z += 50
-  //   drawWorld(scene, base_x, base_z + 50/chunkSize)
-  // }
-}
-
 function animate() {
   requestAnimationFrame( animate )
-  //updateCameraPosition(camera)
   renderChunksAroundCamera()
-  console.log(camera.position)
   renderer.render( scene, camera )
  }
 
