@@ -33,7 +33,7 @@ const aspect = 2;  // the canvas default
 const near = 0.1;
 const far = 1000;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-camera.position.set(-cellSize * .3, cellSize * .8, -cellSize * .3);
+camera.position.set(-cellSize * .3, worldHeight * cellSize * .8, -cellSize * .3);
 
 /*
 Orbit control
@@ -51,63 +51,6 @@ window.addEventListener( 'resize', () => {
 	camera.updateProjectionMatrix()
 })
 
-/* 
-Vortex generation with 2D perlin noise
-*/
-const world = new VoxelWorld(cellSize * worldSize);
-
-for (let y = 0; y < cellSize * worldHeight; ++y) {
-  for (let z = 0; z < cellSize * worldSize; ++z) {
-    for (let x = 0; x < cellSize * worldSize; ++x) {
-      const point = new THREE.Vector2(x / cellSize, z / cellSize);
-      const height = perlin_noise(point) * cellSize;
-
-      if (y < height) {
-        world.setVoxel(x, y, z, 1);
-      }
-    }
-  }
-}
-const {
-  positions,
-  normals,
-  indices
-} = world.generateGeometryDataForCell(0, 0, 0);
-const geometry = new THREE.BufferGeometry();
-const material = new THREE.MeshLambertMaterial({
-  color: 'green'
-});
-
-const positionNumComponents = 3;
-const normalNumComponents = 3;
-geometry.setAttribute(
-  'position',
-  new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
-geometry.setAttribute(
-  'normal',
-  new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
-geometry.setIndex(indices);
-const mesh = new THREE.Mesh(geometry, material);
-scene.add(mesh);
-
-/*
-Mesh creation and rendering
-*/
-
-//add red cube in center
-var geometry_cube = new THREE.BoxGeometry( 1, 1, 1) //create a cube
-var material_cube = new THREE.MeshStandardMaterial( { color: 0xff0051 })//color of cube, MeshStandardMaterial can interact with light
-var cube = new THREE.Mesh ( geometry_cube, material_cube ) //mesh = geometry+color, what scene will hold
-scene.add( cube ) //add cube to scene
-
-//add bigger wireframe  cube
-var geometry_WC = new THREE.BoxGeometry( 3, 3, 3)
-var material_WC = new THREE.MeshBasicMaterial( {
- color: "#dadada", wireframe: true, transparent: true
-})
-var wireframeCube = new THREE.Mesh ( geometry_WC, material_WC )
-scene.add( wireframeCube )
-
 /*
 Lighting
 */
@@ -119,22 +62,98 @@ var pointLight = new THREE.PointLight( 0xffffff, 1 ); //point light source
 pointLight.position.set( 25, 50, 25 ); //set light source position
 scene.add( pointLight ); //add point light
 
+function drawWorld(scene, new_x, new_z){
+  base_x = new_x;
+  base_z = new_z;
+  /*
+  Remove all mesh
+  */
+  for (let i = scene.children.length - 1; i >= 0; i--) {
+    if(scene.children[i].type === "Mesh")
+        scene.remove(scene.children[i]);
+  }
+
+
+  /* 
+  Vortex generation with 2D perlin noise
+  */
+  const world = new VoxelWorld(cellSize * worldSize);
+
+  for (let y = 0; y < cellSize * worldHeight; ++y) {
+    for (let z = 0; z < cellSize * worldSize; ++z) {
+      for (let x = 0; x < cellSize * worldSize; ++x) {
+        const point = new THREE.Vector2(x / cellSize - base_x, z / cellSize - base_z);
+        const height = perlin_noise(point) * cellSize;
+
+        if (y < height) {
+          world.setVoxel(x, y, z, 1);
+        }
+      }
+    }
+  }
+  const {
+    positions,
+    normals,
+    indices
+  } = world.generateGeometryDataForCell(0, 0, 0);
+  const geometry = new THREE.BufferGeometry();
+  const material = new THREE.MeshLambertMaterial({
+    color: 'green'
+  });
+
+  const positionNumComponents = 3;
+  const normalNumComponents = 3;
+  geometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
+  geometry.setAttribute(
+    'normal',
+    new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
+  geometry.setIndex(indices);
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+
+}
+var base_x, base_z;
+drawWorld(scene, 1.5, 1.5)
+
+
 renderer.render( scene, camera ) //render and show it on screen
 
 /*
 Animation of cube
 */
 
+function updateCameraPosition(camera) {
+  if (camera.position.x > 50){
+    camera.position.x -= 50
+    controls.target.x -= 50
+    drawWorld(scene, base_x - 50/cellSize, base_z)
+  }
+  if (camera.position.z > 50){
+    camera.position.z -= 50
+    controls.target.z -= 50
+    drawWorld(scene, base_x, base_z - 50/cellSize)
+  }
+
+  if (camera.position.x < -10){
+    camera.position.x += 50
+    controls.target.x += 50
+    drawWorld(scene, base_x + 50/cellSize, base_z)
+  }
+  if (camera.position.z < -10){
+    camera.position.z += 50
+    controls.target.z += 50
+    drawWorld(scene, base_x, base_z + 50/cellSize)
+  }
+}
+
 function animate() {
-    requestAnimationFrame( animate )
-    //for cube
-    cube.rotation.x += 0.04;
-    cube.rotation.y += 0.04;
-    //for wireframeCube
-    wireframeCube.rotation.x -= 0.01;
-    wireframeCube.rotation.y -= 0.01;
-    renderer.render( scene, camera )
-   }
+  requestAnimationFrame( animate )
+  updateCameraPosition(camera)
+  console.log(camera.position)
+  renderer.render( scene, camera )
+ }
 
 animate()
 
