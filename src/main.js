@@ -7,10 +7,11 @@ import {perlin_noise} from './noise.js';
 /*
 Global variable
 */
-const cellSize = 32;
-const worldSize = 5;
-const worldHeight = 2;
-
+const CHUNK_SIZE = 32;
+const WORLD_SIZE = 5;
+const WORLD_HEIGHT = 64;
+const HEIGHT_MULTIPLIER = 32;
+const RENDER_DISTANCE = 1;
 /*
 Renderer/ screen setting
 */
@@ -33,13 +34,13 @@ const aspect = 2;  // the canvas default
 const near = 0.1;
 const far = 1000;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-camera.position.set(-cellSize * .3, worldHeight * cellSize * .8, -cellSize * .3);
+camera.position.set(WORLD_SIZE * CHUNK_SIZE / 2, WORLD_HEIGHT * .8, WORLD_SIZE * CHUNK_SIZE / 2);
 
 /*
 Orbit control
 */
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(cellSize / 2, cellSize / 3, cellSize / 2);
+controls.target.set(CHUNK_SIZE / 2, CHUNK_SIZE / 3, CHUNK_SIZE / 2);
 controls.update();
 
 // resize canvas on resize window
@@ -55,35 +56,50 @@ window.addEventListener( 'resize', () => {
 Lighting
 */
 
-var ambientLight = new THREE.AmbientLight ( 0xffffff, 0.5) //ambient light source
+let ambientLight = new THREE.AmbientLight ( 0xffffff, 0.5) //ambient light source
 scene.add( ambientLight ) //add ambient light
 
-var pointLight = new THREE.PointLight( 0xffffff, 1 ); //point light source
+let pointLight = new THREE.PointLight( 0xffffff, 1 ); //point light source
 pointLight.position.set( 25, 50, 25 ); //set light source position
 scene.add( pointLight ); //add point light
 
-function drawWorld(scene, new_x, new_z){
-  base_x = new_x;
-  base_z = new_z;
-  /*
-  Remove all mesh
-  */
-  for (let i = scene.children.length - 1; i >= 0; i--) {
-    if(scene.children[i].type === "Mesh")
-        scene.remove(scene.children[i]);
+function getChunk(chunks, chunk_x, chunk_z){
+  let index_x = Math.floor(chunk_x / CHUNK_SIZE);
+  let index_z = Math.floor(chunk_z / CHUNK_SIZE);
+  if (index_x in chunks)
+    return chunks[index_x][index_z];
+  else
+    return null;
+}
+
+function setChunk(chunks, chunk_x, chunk_z, meshes){
+  let index_x = Math.floor(chunk_x / CHUNK_SIZE);
+  let index_z = Math.floor(chunk_z / CHUNK_SIZE);
+  
+  if (!(index_x in chunks)) {
+    chunks[index_x] = []
   }
+  chunks[index_x][index_z] = meshes;
+}
 
+function unloadChunk(scene, chunks, chunk_x, chunk_z){
+  let chunk = getChunk(chunks, chunk_x, chunk_z)
+  scene.remove(chunk)
+}
 
+function drawChunk(scene, chunks, chunk_x, chunk_z){
+  if (getChunk(chunks, chunk_x, chunk_z) != null)
+    return; // chunk already drawn
   /* 
   Vortex generation with 2D perlin noise
   */
-  const world = new VoxelWorld(cellSize * worldSize);
+  const world = new VoxelWorld(CHUNK_SIZE);
 
-  for (let y = 0; y < cellSize * worldHeight; ++y) {
-    for (let z = 0; z < cellSize * worldSize; ++z) {
-      for (let x = 0; x < cellSize * worldSize; ++x) {
-        const point = new THREE.Vector2(x / cellSize - base_x, z / cellSize - base_z);
-        const height = perlin_noise(point) * cellSize;
+  for (let y = 0; y < WORLD_HEIGHT; ++y) {
+    for (let z = 0; z < CHUNK_SIZE; ++z) {
+      for (let x = 0; x < CHUNK_SIZE; ++x) {
+        const point = new THREE.Vector2((x + chunk_x) / CHUNK_SIZE, (z + chunk_z) / CHUNK_SIZE);
+        const height = perlin_noise(point) * HEIGHT_MULTIPLIER;
 
         if (y < height) {
           world.setVoxel(x, y, z, 1);
@@ -95,7 +111,7 @@ function drawWorld(scene, new_x, new_z){
     positions,
     normals,
     indices
-  } = world.generateGeometryDataForCell(0, 0, 0);
+  } = world.generateGeometryDataForCell(chunk_x / CHUNK_SIZE, 0, chunk_z / CHUNK_SIZE);
   const geometry = new THREE.BufferGeometry();
   const material = new THREE.MeshLambertMaterial({
     color: 'green'
@@ -111,11 +127,13 @@ function drawWorld(scene, new_x, new_z){
     new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
   geometry.setIndex(indices);
   const mesh = new THREE.Mesh(geometry, material);
+  setChunk(chunks, chunk_x, chunk_z, mesh);
   scene.add(mesh);
-
 }
-var base_x, base_z;
-drawWorld(scene, 1.5, 1.5)
+
+let chunks = [];
+
+renderChunksAroundCamera()
 
 
 renderer.render( scene, camera ) //render and show it on screen
@@ -124,33 +142,42 @@ renderer.render( scene, camera ) //render and show it on screen
 Animation of cube
 */
 
+function renderChunksAroundCamera(){
+  let camera_chunk_x = Math.floor(camera.position.x / CHUNK_SIZE);
+  let camera_chunk_z = Math.floor(camera.position.z / CHUNK_SIZE);
+  for (let x = -RENDER_DISTANCE; x < RENDER_DISTANCE; ++x){
+    for (let z = -RENDER_DISTANCE; z < RENDER_DISTANCE; ++z){
+      drawChunk(scene, chunks, (camera_chunk_x + x) * CHUNK_SIZE, (camera_chunk_z + z) * CHUNK_SIZE);
+    }
+  }
+}
+
 function updateCameraPosition(camera) {
   if (camera.position.x > 50){
-    camera.position.x -= 50
-    controls.target.x -= 50
-    drawWorld(scene, base_x - 50/cellSize, base_z)
+    drawChunk(scene, chunks, 32, 0)
   }
-  if (camera.position.z > 50){
-    camera.position.z -= 50
-    controls.target.z -= 50
-    drawWorld(scene, base_x, base_z - 50/cellSize)
-  }
+  // if (camera.position.z > 50){
+  //   camera.position.z -= 50
+  //   controls.target.z -= 50
+  //   drawWorld(scene, base_x, base_z - 50/chunkSize)
+  // }
 
-  if (camera.position.x < -10){
-    camera.position.x += 50
-    controls.target.x += 50
-    drawWorld(scene, base_x + 50/cellSize, base_z)
-  }
-  if (camera.position.z < -10){
-    camera.position.z += 50
-    controls.target.z += 50
-    drawWorld(scene, base_x, base_z + 50/cellSize)
-  }
+  // if (camera.position.x < -10){
+  //   camera.position.x += 50
+  //   controls.target.x += 50
+  //   drawWorld(scene, base_x + 50/chunkSize, base_z)
+  // }
+  // if (camera.position.z < -10){
+  //   camera.position.z += 50
+  //   controls.target.z += 50
+  //   drawWorld(scene, base_x, base_z + 50/chunkSize)
+  // }
 }
 
 function animate() {
   requestAnimationFrame( animate )
-  updateCameraPosition(camera)
+  //updateCameraPosition(camera)
+  renderChunksAroundCamera()
   console.log(camera.position)
   renderer.render( scene, camera )
  }

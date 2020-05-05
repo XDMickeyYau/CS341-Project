@@ -56,7 +56,7 @@ class VoxelWorld {
           const voxelZ = startZ + z;
           for (let x = 0; x < cellSize; ++x) {
             const voxelX = startX + x;
-            const voxel = this.getVoxel(voxelX, voxelY, voxelZ);
+            const voxel = this.getVoxel(x, y, z);
             if (voxel) {
               // There is a voxel here but do we need faces for it?
               for (const {dir, corners} of VoxelWorld.faces) {
@@ -68,7 +68,7 @@ class VoxelWorld {
                   // this voxel has no neighbor in this direction so we need a face.
                   const ndx = positions.length / 3;
                   for (const pos of corners) {
-                    positions.push(pos[0] + x, pos[1] + y, pos[2] + z);
+                    positions.push(pos[0] + voxelX, pos[1] + voxelY, pos[2] + voxelZ);
                     normals.push(...dir);
                   }
                   indices.push(
