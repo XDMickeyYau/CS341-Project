@@ -1,7 +1,5 @@
 import * as THREE from '../node_modules/three/build/three.module.js';//three.module.js
 import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
-import VoxelWorld from './Voxelworld.js'; //library for Voxel world
-import {perlin_noise} from './noise.js';
 //import {addLight} from './light'
 
 /*
@@ -82,36 +80,27 @@ function setChunk(chunks, chunk_x, chunk_z, meshes){
   chunks[index_x][index_z] = meshes;
 }
 
-function unloadChunk(scene, chunks, chunk_x, chunk_z){
-  let chunk = getChunk(chunks, chunk_x, chunk_z)
-  scene.remove(chunk)
-}
+const chunkWorker = new Worker('src/chunk_worker.js', { type: "module" }  );
 
 function drawChunk(scene, chunks, chunk_x, chunk_z){
   if (getChunk(chunks, chunk_x, chunk_z) != null)
     return; // chunk already drawn
+  setChunk(chunks, chunk_x, chunk_z, 1)
   /* 
   Vortex generation with 2D perlin noise
   */
-  const world = new VoxelWorld(CHUNK_SIZE);
+  chunkWorker.postMessage([chunk_x, chunk_z])
+  console.log(`draw: ${chunk_x}, ${chunk_z}`)
+}
 
-  for (let y = 0; y < WORLD_HEIGHT; ++y) {
-    for (let z = 0; z < CHUNK_SIZE; ++z) {
-      for (let x = 0; x < CHUNK_SIZE; ++x) {
-        const point = new THREE.Vector2((x + chunk_x) / CHUNK_SIZE, (z + chunk_z) / CHUNK_SIZE);
-        const height = perlin_noise(point) * HEIGHT_MULTIPLIER;
+chunkWorker.onmessage = function(e) {
+  let positions = e.data[0]
+  let normals = e.data[1]
+  let indices = e.data[2]
+  let chunk_x = e.data[3]
+  let chunk_z = e.data[4]
 
-        if (y < height) {
-          world.setVoxel(x, y, z, 1);
-        }
-      }
-    }
-  }
-  const {
-    positions,
-    normals,
-    indices
-  } = world.generateGeometryDataForCell(chunk_x / CHUNK_SIZE, 0, chunk_z / CHUNK_SIZE);
+  console.log(`done: ${chunk_x}, ${chunk_z}`)
   const geometry = new THREE.BufferGeometry();
   const material = new THREE.MeshLambertMaterial({
     color: 'green'
@@ -127,6 +116,7 @@ function drawChunk(scene, chunks, chunk_x, chunk_z){
     new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
   geometry.setIndex(indices);
   const mesh = new THREE.Mesh(geometry, material);
+
   setChunk(chunks, chunk_x, chunk_z, mesh);
   scene.add(mesh);
 }
@@ -139,12 +129,16 @@ renderChunksAroundCamera()
 renderer.render( scene, camera ) //render and show it on screen
 
 function removeFarAwayChunks(){
-  for (let x_values in chunks){
-    for (let z_values in chunks[x_values]){
-      let camera_chunk_x = Math.floor(camera.position.x / CHUNK_SIZE);
-      let camera_chunk_z = Math.floor(camera.position.z / CHUNK_SIZE);
-      if (Math.abs(x_values - camera_chunk_x) > RENDER_DISTANCE * 1.5 || Math.abs(z_values - camera_chunk_z) > RENDER_DISTANCE * 1.5)
-        scene.remove(chunks[x_values][z_values])
+  for (let x_value in chunks){
+    for (let z_value in chunks[x_value]){
+      if (chunks[x_value][z_value] == null) continue
+      let camera_chunk_x = Math.floor(controls.target.x / CHUNK_SIZE);
+      let camera_chunk_z = Math.floor(controls.target.z / CHUNK_SIZE);
+      if (Math.abs(x_value - camera_chunk_x) > RENDER_DISTANCE * 1.5 || Math.abs(z_value - camera_chunk_z) > RENDER_DISTANCE * 1.5){
+        console.log(`remove: ${x_value * CHUNK_SIZE}, ${z_value * CHUNK_SIZE}`)
+        scene.remove(chunks[x_value][z_value])
+        setChunk(chunks, x_value * CHUNK_SIZE, z_value * CHUNK_SIZE, null)
+      }
     }
   }
 }
@@ -152,8 +146,8 @@ function removeFarAwayChunks(){
 
 function renderChunksAroundCamera(){
   removeFarAwayChunks();
-  let camera_chunk_x = Math.floor(camera.position.x / CHUNK_SIZE);
-  let camera_chunk_z = Math.floor(camera.position.z / CHUNK_SIZE);
+  let camera_chunk_x = Math.floor(controls.target.x / CHUNK_SIZE);
+  let camera_chunk_z = Math.floor(controls.target.z / CHUNK_SIZE);
   for (let x = -RENDER_DISTANCE; x < RENDER_DISTANCE; ++x){
     for (let z = -RENDER_DISTANCE; z < RENDER_DISTANCE; ++z){
       drawChunk(scene, chunks, (camera_chunk_x + x) * CHUNK_SIZE, (camera_chunk_z + z) * CHUNK_SIZE);
@@ -165,7 +159,7 @@ function animate() {
   requestAnimationFrame( animate )
   renderChunksAroundCamera()
   renderer.render( scene, camera )
- }
+}
 
 animate()
 
