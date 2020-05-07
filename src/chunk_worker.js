@@ -48,5 +48,5 @@ onmessage = function(e) {
     uv,
     indices
   } = world.generateGeometryDataForCell(chunk_x / CHUNK_SIZE, 0, chunk_z / CHUNK_SIZE);
-  postMessage([positions, normals, indices, chunk_x, chunk_z]);
+  postMessage([positions, normals, indices, chunk_x, chunk_z,uv]);
 }

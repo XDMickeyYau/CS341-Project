@@ -118,6 +118,7 @@ for (let i = 0; i < MAX_WORKER; i++){
     let indices = e.data[2]
     let chunk_x = e.data[3]
     let chunk_z = e.data[4]
+    let uvs = e.data[5];
     const geometry = new THREE.BufferGeometry();
     const material = new THREE.MeshLambertMaterial({
       map: texture,
