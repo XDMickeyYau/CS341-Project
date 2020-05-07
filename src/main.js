@@ -61,6 +61,17 @@ let pointLight = new THREE.PointLight( 0xffffff, 1 ); //point light source
 pointLight.position.set( 25, 50, 25 ); //set light source position
 scene.add( pointLight ); //add point light
 
+
+/*
+Texture
+*/
+
+const loader = new THREE.TextureLoader();
+const texture = loader.load('resources/images/minecraft/flourish-cc-by-nc-sa.png', render);
+texture.magFilter = THREE.NearestFilter;
+texture.minFilter = THREE.NearestFilter;
+
+
 function getChunk(chunks, chunk_x, chunk_z){
   let index_x = Math.floor(chunk_x / CHUNK_SIZE);
   let index_z = Math.floor(chunk_z / CHUNK_SIZE);
@@ -109,17 +120,24 @@ for (let i = 0; i < MAX_WORKER; i++){
     let chunk_z = e.data[4]
     const geometry = new THREE.BufferGeometry();
     const material = new THREE.MeshLambertMaterial({
-      color: 'green'
+      map: texture,
+      side: THREE.DoubleSide,
+      alphaTest: 0.1,
+      transparent: true,
     });
   
     const positionNumComponents = 3;
     const normalNumComponents = 3;
+    const uvNumComponents = 2;
     geometry.setAttribute(
       'position',
       new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
     geometry.setAttribute(
       'normal',
       new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
+     geometry.setAttribute(
+        'uv',
+        new THREE.BufferAttribute(new Float32Array(uvs), uvNumComponents));
     geometry.setIndex(indices);
     const mesh = new THREE.Mesh(geometry, material);
   
