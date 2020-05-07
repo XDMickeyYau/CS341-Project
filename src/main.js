@@ -80,7 +80,12 @@ function setChunk(chunks, chunk_x, chunk_z, meshes){
   chunks[index_x][index_z] = meshes;
 }
 
-const chunkWorker = new Worker('src/chunk_worker.js', { type: "module" }  );
+const MAX_WORKER = 10
+const chunkWorker = []
+var id = 0;
+for (let i = 0; i < MAX_WORKER; i++){
+  chunkWorker[i] = new Worker('src/chunk_worker.js', { type: "module" }  );
+}
 
 function drawChunk(scene, chunks, chunk_x, chunk_z){
   if (getChunk(chunks, chunk_x, chunk_z) != null)
@@ -89,36 +94,38 @@ function drawChunk(scene, chunks, chunk_x, chunk_z){
   /* 
   Vortex generation with 2D perlin noise
   */
-  chunkWorker.postMessage([chunk_x, chunk_z])
-  console.log(`draw: ${chunk_x}, ${chunk_z}`)
+  chunkWorker[id].postMessage([chunk_x, chunk_z])
+  if (++id >= MAX_WORKER) {
+    id = 0;
+  }
 }
 
-chunkWorker.onmessage = function(e) {
-  let positions = e.data[0]
-  let normals = e.data[1]
-  let indices = e.data[2]
-  let chunk_x = e.data[3]
-  let chunk_z = e.data[4]
-
-  console.log(`done: ${chunk_x}, ${chunk_z}`)
-  const geometry = new THREE.BufferGeometry();
-  const material = new THREE.MeshLambertMaterial({
-    color: 'green'
-  });
-
-  const positionNumComponents = 3;
-  const normalNumComponents = 3;
-  geometry.setAttribute(
-    'position',
-    new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
-  geometry.setAttribute(
-    'normal',
-    new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
-  geometry.setIndex(indices);
-  const mesh = new THREE.Mesh(geometry, material);
-
-  setChunk(chunks, chunk_x, chunk_z, mesh);
-  scene.add(mesh);
+for (let i = 0; i < MAX_WORKER; i++){
+  chunkWorker[i].onmessage = function(e) {
+    let positions = e.data[0]
+    let normals = e.data[1]
+    let indices = e.data[2]
+    let chunk_x = e.data[3]
+    let chunk_z = e.data[4]
+    const geometry = new THREE.BufferGeometry();
+    const material = new THREE.MeshLambertMaterial({
+      color: 'green'
+    });
+  
+    const positionNumComponents = 3;
+    const normalNumComponents = 3;
+    geometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
+    geometry.setAttribute(
+      'normal',
+      new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
+    geometry.setIndex(indices);
+    const mesh = new THREE.Mesh(geometry, material);
+  
+    setChunk(chunks, chunk_x, chunk_z, mesh);
+    scene.add(mesh);
+  }
 }
 
 let chunks = [];
