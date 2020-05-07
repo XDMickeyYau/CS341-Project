@@ -1,7 +1,7 @@
 import * as THREE from '../node_modules/three/build/three.module.js';//three.module.js
 
 class VoxelWorld {
-    constructor(cellSize) {
+    constructor(options) {
       this.cellSize = options.cellSize;
       this.tileSize = options.tileSize;
       this.tileTextureWidth = options.tileTextureWidth;

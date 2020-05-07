@@ -67,7 +67,7 @@ Texture
 */
 
 const loader = new THREE.TextureLoader();
-const texture = loader.load('resources/images/minecraft/flourish-cc-by-nc-sa.png', render);
+const texture = loader.load('../textures/textures.png', ()=>renderer.render(scene, camera));
 texture.magFilter = THREE.NearestFilter;
 texture.minFilter = THREE.NearestFilter;
 
@@ -113,6 +113,7 @@ function drawChunk(scene, chunks, chunk_x, chunk_z){
 
 for (let i = 0; i < MAX_WORKER; i++){
   chunkWorker[i].onmessage = function(e) {
+    console.log(e);
     let positions = e.data[0]
     let normals = e.data[1]
     let indices = e.data[2]
