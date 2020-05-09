@@ -1,6 +1,7 @@
 import * as THREE from '../node_modules/three/build/three.module.js';//three.module.js
 import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
 //import {addLight} from './light'
+import { Reflector } from '../node_modules/three/examples/jsm/objects/Reflector.js';
 
 /*
 Global variable
@@ -54,12 +55,20 @@ window.addEventListener( 'resize', () => {
 Lighting
 */
 
-let ambientLight = new THREE.AmbientLight ( 0xffffff, 0.5) //ambient light source
+let ambientLight = new THREE.AmbientLight ( 0xffffff, 0.1) //ambient light source
 scene.add( ambientLight ) //add ambient light
 
-let pointLight = new THREE.PointLight( 0xffffff, 1 ); //point light source
-pointLight.position.set( 25, 50, 25 ); //set light source position
-scene.add( pointLight ); //add point light
+let directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+directionalLight.shadow.mapSize.width = 4096;  // default
+directionalLight.shadow.mapSize.height = 4096; // default
+directionalLight.position.set(-100,50,0);
+directionalLight.castShadow = true; 
+
+scene.add( directionalLight );
+
+//let pointLight = new THREE.PointLight( 0xffffff, 1 ); //point light source
+//pointLight.position.set( 25, 50, 25 ); //set light source position
+//scene.add( pointLight ); //add point light
 
 
 /*
@@ -70,6 +79,7 @@ const loader = new THREE.TextureLoader();
 const texture = loader.load('../textures/textures.png', ()=>renderer.render(scene, camera));
 texture.magFilter = THREE.NearestFilter;
 texture.minFilter = THREE.NearestFilter;
+
 
 
 function getChunk(chunks, chunk_x, chunk_z){
@@ -113,7 +123,7 @@ function drawChunk(scene, chunks, chunk_x, chunk_z){
 
 for (let i = 0; i < MAX_WORKER; i++){
   chunkWorker[i].onmessage = function(e) {
-    console.log(e);
+    console.log(e.data);
     let positions = e.data[0]
     let normals = e.data[1]
     let indices = e.data[2]
@@ -145,6 +155,19 @@ for (let i = 0; i < MAX_WORKER; i++){
   
     setChunk(chunks, chunk_x, chunk_z, mesh);
     scene.add(mesh);
+
+    var mirror_geometry = new THREE.PlaneBufferGeometry( CHUNK_SIZE, CHUNK_SIZE );
+    var groundMirror = new Reflector( mirror_geometry, {
+      clipBias: 0.003,
+      textureWidth: window.innerWidth*window.devicePixelRatio,
+      textureHeight: window.innerHeight*window.devicePixelRatio,
+      color: 0x334477
+    } );
+    groundMirror.position.y = 10.2;
+    groundMirror.rotateX( - Math.PI / 2 );
+    groundMirror.position.x = chunk_x+CHUNK_SIZE/2
+    groundMirror.position.z = chunk_z+CHUNK_SIZE/2
+    scene.add( groundMirror );
   }
 }
 

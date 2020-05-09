@@ -17,10 +17,10 @@ onmessage = function(e) {
   let chunk_z = e.data[1];
 
   const world = new VoxelWorld({
-    CHUNK_SIZE,
-    tileSize,
-    tileTextureWidth,
-    tileTextureHeight,
+    cellSize: CHUNK_SIZE,
+    tileSize: tileSize,
+    tileTextureWidth: tileTextureWidth,
+    tileTextureHeight: tileTextureHeight,
   });
     
 
@@ -30,6 +30,7 @@ onmessage = function(e) {
         const point = new THREE.Vector2((x + chunk_x) / CHUNK_SIZE, (z + chunk_z) / CHUNK_SIZE);
         const height = perlin_noise(point) * HEIGHT_MULTIPLIER;
 
+        
         if (y < height && y+2 > height){ //surface
           world.setVoxel(x, y, z, 1);
         }
@@ -39,14 +40,15 @@ onmessage = function(e) {
         else if (y<10){ //water
           world.setVoxel(x, y, z, 3);
         }
+        
       }
     }
   }
   const {
     positions,
     normals,
-    uv,
+    uvs,
     indices
   } = world.generateGeometryDataForCell(chunk_x / CHUNK_SIZE, 0, chunk_z / CHUNK_SIZE);
-  postMessage([positions, normals, indices, chunk_x, chunk_z,uv]);
+  postMessage([positions, normals, indices, chunk_x, chunk_z,uvs]);
 }

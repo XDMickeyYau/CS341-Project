@@ -63,6 +63,7 @@ class VoxelWorld {
             const voxelX = startX + x;
             const voxel = this.getVoxel(x, y, z);
             if (voxel) {
+              const uvVoxel = voxel - 1;
               // There is a voxel here but do we need faces for it?
               for (const {dir, corners, uvRow} of VoxelWorld.faces) {
                 const neighbor = this.getVoxel(
@@ -93,6 +94,7 @@ class VoxelWorld {
       return {
         positions,
         normals,
+        uvs,
         indices,
       };
     }
