@@ -123,7 +123,7 @@ function drawChunk(scene, chunks, chunk_x, chunk_z){
 
 for (let i = 0; i < MAX_WORKER; i++){
   chunkWorker[i].onmessage = function(e) {
-    console.log(e.data);
+    //console.log(e.data);
     let positions = e.data[0]
     let normals = e.data[1]
     let indices = e.data[2]

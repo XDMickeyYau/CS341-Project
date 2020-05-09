@@ -28,11 +28,14 @@ onmessage = function(e) {
     for (let z = 0; z < CHUNK_SIZE; ++z) {
       for (let x = 0; x < CHUNK_SIZE; ++x) {
         const point = new THREE.Vector2((x + chunk_x) / CHUNK_SIZE, (z + chunk_z) / CHUNK_SIZE);
-        const height = perlin_noise(point) * HEIGHT_MULTIPLIER;
-
+        const height = perlin_noise(point) * (HEIGHT_MULTIPLIER-1);
+        const snow_point = new THREE.Vector2((x + chunk_x) / (CHUNK_SIZE*10), (z + chunk_z) / (CHUNK_SIZE*10));
+        const bio_val = perlin_noise(snow_point);
+        const is_snow = bio_val>0.9;
         
         if (y < height && y+2 > height){ //surface
-          world.setVoxel(x, y, z, 1);
+          if (is_snow) world.setVoxel(x, y, z, 6);
+          else world.setVoxel(x, y, z, 1);
         }
         else if (y < height) { //rock
           world.setVoxel(x, y, z, 2);
