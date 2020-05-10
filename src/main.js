@@ -16,7 +16,7 @@ Renderer/ screen setting
 */
 const renderer = new THREE.WebGLRenderer({ antialias: true})
 renderer.setSize( window.innerWidth, window.innerHeight ) //set render size
-renderer.setClearColor("#222222") // sets renderer background color
+//renderer.setClearColor("#222222") // sets renderer background color
 document.body.appendChild( renderer.domElement ) //add render to html
 
 /*
@@ -59,10 +59,11 @@ let ambientLight = new THREE.AmbientLight ( 0xffffff, 0.1) //ambient light sourc
 scene.add( ambientLight ) //add ambient light
 
 let directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-directionalLight.shadow.mapSize.width = 4096;  // default
-directionalLight.shadow.mapSize.height = 4096; // default
-directionalLight.position.set(-100,50,0);
 directionalLight.castShadow = true; 
+directionalLight.shadow.mapSize.width = WORLD_SIZE*CHUNK_SIZE;  // default
+directionalLight.shadow.mapSize.height = WORLD_SIZE*CHUNK_SIZE/2; // default
+directionalLight.position.set(CHUNK_SIZE*3,WORLD_HEIGHT*2,0);
+
 
 scene.add( directionalLight );
 
