@@ -175,16 +175,17 @@ for (let i = 0; i < MAX_WORKER; i++){
       textureHeight: window.innerHeight*window.devicePixelRatio,
       color: 0x334477
     } );
-    /*
+    
     groundMirror.position.y = 10.2;
     groundMirror.rotateX( - Math.PI / 2 );
     groundMirror.position.x = chunk_x+CHUNK_SIZE/2
     groundMirror.position.z = chunk_z+CHUNK_SIZE/2
-    groundMirror.material.transparent = true;
-    groundMirror.material.opacity = 0.99;
-    groundMirror.material.blending = THREE.MultiplyBlending;
+    //groundMirror.material.transparent = true;
+    //groundMirror.material.opacity = 0.99;
+    //groundMirror.material.blending = THREE.MultiplyBlending;
+    groundMirror.receiveShadow=true;
     scene.add( groundMirror );
-    */
+    
   }
 }
 
