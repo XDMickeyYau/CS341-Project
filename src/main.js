@@ -7,7 +7,7 @@ import { Reflector } from '../node_modules/three/examples/jsm/objects/Reflector.
 Global variable
 */
 const CHUNK_SIZE = 32;
-const WORLD_SIZE = 5;
+const WORLD_SIZE = 3;
 const WORLD_HEIGHT = 64;
 const HEIGHT_MULTIPLIER = 32;
 const RENDER_DISTANCE = 3;
@@ -16,6 +16,8 @@ Renderer/ screen setting
 */
 const renderer = new THREE.WebGLRenderer({ antialias: true})
 renderer.setSize( window.innerWidth, window.innerHeight ) //set render size
+renderer.shadowMap.enabled = true;
+renderer.shadowMapType = THREE.PCFSoftShadowMap;
 //renderer.setClearColor("#222222") // sets renderer background color
 document.body.appendChild( renderer.domElement ) //add render to html
 
@@ -55,14 +57,20 @@ window.addEventListener( 'resize', () => {
 Lighting
 */
 
-let ambientLight = new THREE.AmbientLight ( 0xffffff, 0.1) //ambient light source
+let ambientLight = new THREE.AmbientLight ( 0xffffff, 0.2) //ambient light source
 scene.add( ambientLight ) //add ambient light
 
 let directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+directionalLight.position.set(WORLD_HEIGHT,WORLD_HEIGHT,WORLD_HEIGHT);//WORLD_HEIGHT*1.125
 directionalLight.castShadow = true; 
-directionalLight.shadow.mapSize.width = WORLD_SIZE*CHUNK_SIZE;  // default
-directionalLight.shadow.mapSize.height = WORLD_SIZE*CHUNK_SIZE/2; // default
-directionalLight.position.set(CHUNK_SIZE*3,WORLD_HEIGHT*2,0);
+directionalLight.shadow.camera.left = -CHUNK_SIZE*WORLD_SIZE*1.5;
+directionalLight.shadow.camera.right = CHUNK_SIZE*WORLD_SIZE*1.5;
+directionalLight.shadow.camera.top = CHUNK_SIZE*WORLD_SIZE*1.5;
+directionalLight.shadow.camera.bottom = -CHUNK_SIZE*WORLD_SIZE*1.5 ;
+//directionalLight.shadow.camera.far = 500*CHUNK_SIZE;
+
+var helper = new THREE.CameraHelper( directionalLight.shadow.camera );
+scene.add( helper );
 
 
 scene.add( directionalLight );
@@ -155,6 +163,9 @@ for (let i = 0; i < MAX_WORKER; i++){
     const mesh = new THREE.Mesh(geometry, material);
   
     setChunk(chunks, chunk_x, chunk_z, mesh);
+    
+    mesh.castShadow=true;
+    mesh.receiveShadow =true;
     scene.add(mesh);
 
     var mirror_geometry = new THREE.PlaneBufferGeometry( CHUNK_SIZE, CHUNK_SIZE );
@@ -164,11 +175,16 @@ for (let i = 0; i < MAX_WORKER; i++){
       textureHeight: window.innerHeight*window.devicePixelRatio,
       color: 0x334477
     } );
+    /*
     groundMirror.position.y = 10.2;
     groundMirror.rotateX( - Math.PI / 2 );
     groundMirror.position.x = chunk_x+CHUNK_SIZE/2
     groundMirror.position.z = chunk_z+CHUNK_SIZE/2
+    groundMirror.material.transparent = true;
+    groundMirror.material.opacity = 0.99;
+    groundMirror.material.blending = THREE.MultiplyBlending;
     scene.add( groundMirror );
+    */
   }
 }
 
@@ -209,7 +225,17 @@ function renderChunksAroundCamera(){
 function animate() {
   requestAnimationFrame( animate )
   renderChunksAroundCamera()
+
+
+
   renderer.render( scene, camera )
+}
+
+function light_update()
+{
+  directionalLight.target.copy( controls.target );
+  directionalLight.position.set(WORLD_HEIGHT+controls.target.x,WORLD_HEIGHT+controls.target.y,WORLD_HEIGHT+controls.target.z);
+  scene.add( directionalLight.target );
 }
 
 animate()

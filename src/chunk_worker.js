@@ -6,6 +6,7 @@ import * as THREE from '../node_modules/three/build/three.module.js';//three.mod
 const CHUNK_SIZE = 32;
 const WORLD_HEIGHT = 64;
 const HEIGHT_MULTIPLIER = 32;
+const THRESHOLD = 0.5
 
 onmessage = function(e) {
 
@@ -27,22 +28,24 @@ onmessage = function(e) {
   for (let y = 0; y < WORLD_HEIGHT; ++y) {
     for (let z = 0; z < CHUNK_SIZE; ++z) {
       for (let x = 0; x < CHUNK_SIZE; ++x) {
-        const point = new THREE.Vector2((x + chunk_x) / CHUNK_SIZE, (z + chunk_z) / CHUNK_SIZE);
-        const height = perlin_noise(point) * (HEIGHT_MULTIPLIER-1);
-        const snow_point = new THREE.Vector2((x + chunk_x) / (CHUNK_SIZE*10), (z + chunk_z) / (CHUNK_SIZE*10));
-        const bio_val = perlin_noise(snow_point);
+        const point = new THREE.Vector3((x + chunk_x) / CHUNK_SIZE, (z + chunk_z) / CHUNK_SIZE,  y / HEIGHT_MULTIPLIER );
+        const block_val = perlin_noise(point) * (WORLD_HEIGHT-y)/WORLD_HEIGHT;
+        const upper_point = new THREE.Vector3((x + chunk_x) / CHUNK_SIZE, (z + chunk_z) / CHUNK_SIZE,(y+1) / HEIGHT_MULTIPLIER );
+        const upper_block_val = perlin_noise(upper_point) * (WORLD_HEIGHT-(y+1))/WORLD_HEIGHT;
+        const bio_point = new THREE.Vector3((x + chunk_x) / (CHUNK_SIZE*10), (z + chunk_z) / (CHUNK_SIZE*10), 0.0);
+        const bio_val = perlin_noise(bio_point);
         const is_snow = bio_val>0.9;
+
+        //if (x==10&&z==10) this.console.log('y=',y,'noise=',block_val);
         
-        if (y < height && y+2 > height){ //surface
+        if (block_val>THRESHOLD && upper_block_val<THRESHOLD && y>10){ //surface
           if (is_snow) world.setVoxel(x, y, z, 6);
           else world.setVoxel(x, y, z, 1);
         }
-        else if (y < height) { //rock
+        else if (block_val>THRESHOLD) { //rock
           world.setVoxel(x, y, z, 2);
         }
-        else if (y<10){ //water
-          world.setVoxel(x, y, z, 3);
-        }
+        
         
       }
     }
