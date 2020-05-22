@@ -50,9 +50,12 @@ onmessage = function(e) {
         const upper_block_val = (perlin_noise(upper_point) + BASE_HEIGHT) * (WORLD_HEIGHT-(y+1))/WORLD_HEIGHT;
         const bio_point = new THREE.Vector3((x + chunk_x) / (CHUNK_SIZE*10), (z + chunk_z) / (CHUNK_SIZE*10), 0.0);
         const bio_val = perlin_noise(bio_point);
+        const OFFSET = 1000;
+        const weather_point = new THREE.Vector3((x + chunk_x + OFFSET) / (CHUNK_SIZE), (z + chunk_z + OFFSET) / (CHUNK_SIZE), 0.0);
+        const weather_val = perlin_noise(weather_point);
         const is_snow = bio_val>0.4;
         const is_forest = bio_val < -0;
-        const is_desert = bio_val> 0.1 && bio_val < 0.2
+        const is_desert = bio_val> 0.1 && bio_val < 0.35 && weather_val > 0.3;
 
         //if (x==10&&z==10) this.console.log('y=',y,'noise=',block_val);
         
