@@ -52,11 +52,13 @@ onmessage = function(e) {
         const bio_val = perlin_noise(bio_point);
         const is_snow = bio_val>0.4;
         const is_forest = bio_val < -0;
+        const is_desert = bio_val> 0.1 && bio_val < 0.2
 
         //if (x==10&&z==10) this.console.log('y=',y,'noise=',block_val);
         
         if (block_val>THRESHOLD && upper_block_val<THRESHOLD && y>10){ //surface
           if (is_snow) world.setVoxel(x, y, z, 6);
+          else if (is_desert) world.setVoxel(x, y, z, 7)
           else if (is_forest && generate_tree(bio_val, x, y)) {
             world.setVoxel(x, y, z, 4)
           } 
