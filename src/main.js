@@ -72,8 +72,8 @@ directionalLight.shadow.camera.far = CHUNK_SIZE*WORLD_SIZE*5;
 directionalLight.shadow.bias = -0.01
 
 
-var helper = new THREE.CameraHelper( directionalLight.shadow.camera );
-scene.add( helper );
+//var helper = new THREE.CameraHelper( directionalLight.shadow.camera );
+//scene.add( helper );
 
 
 scene.add( directionalLight );
