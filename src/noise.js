@@ -40,8 +40,6 @@ const  ampl_multiplier = 0.5;
 const  num_octaves = 4;
 
 function perlin_noise(point) {
-	const BASE_HEIGHT = 0.5     // base height offset for perlin noise, increase to increase base height level for terrain
-  
 	const c_000 = point.clone().floor();
 	const c_100 = point.clone().floor().add(new THREE.Vector3(1.0,0.0,0.0));
 	const c_010 = point.clone().floor().add(new THREE.Vector3(0.0,1.0,0.0));
@@ -86,7 +84,7 @@ function perlin_noise(point) {
 	const uv1 = mix(phi_011,phi_111,blending_weight_poly(d_000.x));
 	const ans1 = mix(st1,uv1,blending_weight_poly(d_000.y)) ;
 	//console.log('noise val',ans0,ans1,'height=',d_000.z)
-	const ans = mix(ans0,ans1,blending_weight_poly(d_000.z))+ BASE_HEIGHT;
+	const ans = mix(ans0,ans1,blending_weight_poly(d_000.z));
 
 	return ans;
 }

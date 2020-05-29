@@ -84,6 +84,49 @@ scene.add( directionalLight );
 
 
 /*
+Water
+*/
+
+const WATER_SIZE = CHUNK_SIZE * (RENDER_DISTANCE + 1) * 2
+const WATER_MARGIN = ( WATER_SIZE - CHUNK_SIZE * RENDER_DISTANCE * 2 ) / 2
+console.log(WATER_MARGIN)
+
+let mirror_geometry = new THREE.PlaneBufferGeometry( WATER_SIZE, WATER_SIZE );
+let groundMirror = new Reflector( mirror_geometry, {
+  clipBias: 0.003,
+  textureWidth: window.innerWidth*window.devicePixelRatio,
+  textureHeight: window.innerHeight*window.devicePixelRatio,
+  color: 0x334477,
+  recursion: 0
+} );
+groundMirror.position.y = 10.2;
+groundMirror.rotateX( - Math.PI / 2 );
+// groundMirror.position.x = chunk_x + CHUNK_SIZE / 2
+// groundMirror.position.z = chunk_z + CHUNK_SIZE / 2  
+
+
+groundMirror.receiveShadow=true;
+scene.add( groundMirror );
+
+
+function updateWaterPosition(chunk_x, chunk_z) {
+  let delta = WATER_SIZE / 2 - WATER_MARGIN
+
+  if (chunk_x < groundMirror.position.x - delta) {
+    groundMirror.position.x = chunk_x + delta
+  }
+  if (chunk_z < groundMirror.position.z - delta) {
+    groundMirror.position.z = chunk_z + delta
+  }
+  if (chunk_x + CHUNK_SIZE > groundMirror.position.x + delta) {
+    groundMirror.position.x = chunk_x + CHUNK_SIZE - delta
+  }
+  if (chunk_z + CHUNK_SIZE > groundMirror.position.z + delta) {
+    groundMirror.position.z = chunk_z + CHUNK_SIZE - delta
+  }
+}
+
+/*
 Texture
 */
 
@@ -170,25 +213,7 @@ for (let i = 0; i < MAX_WORKER; i++){
     mesh.castShadow=true;
     mesh.receiveShadow =true;
     scene.add(mesh);
-
-    var mirror_geometry = new THREE.PlaneBufferGeometry( CHUNK_SIZE, CHUNK_SIZE );
-    var groundMirror = new Reflector( mirror_geometry, {
-      clipBias: 0.003,
-      textureWidth: window.innerWidth*window.devicePixelRatio,
-      textureHeight: window.innerHeight*window.devicePixelRatio,
-      color: 0x334477
-    } );
-    
-    groundMirror.position.y = 10.2;
-    groundMirror.rotateX( - Math.PI / 2 );
-    groundMirror.position.x = chunk_x+CHUNK_SIZE/2
-    groundMirror.position.z = chunk_z+CHUNK_SIZE/2
-    //groundMirror.material.transparent = true;
-    //groundMirror.material.opacity = 0.99;
-    //groundMirror.material.blending = THREE.MultiplyBlending;
-    groundMirror.receiveShadow=true;
-    scene.add( groundMirror );
-    
+    updateWaterPosition(chunk_x, chunk_z)
   }
 }
 
