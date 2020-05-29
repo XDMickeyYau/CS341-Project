@@ -67,7 +67,10 @@ directionalLight.shadow.camera.left = -CHUNK_SIZE*WORLD_SIZE*1.5;
 directionalLight.shadow.camera.right = CHUNK_SIZE*WORLD_SIZE*1.5;
 directionalLight.shadow.camera.top = CHUNK_SIZE*WORLD_SIZE*1.5;
 directionalLight.shadow.camera.bottom = -CHUNK_SIZE*WORLD_SIZE*1.5 ;
-//directionalLight.shadow.camera.far = 500*CHUNK_SIZE;
+directionalLight.shadow.camera.near = CHUNK_SIZE*0.1;
+directionalLight.shadow.camera.far = CHUNK_SIZE*WORLD_SIZE*5;
+directionalLight.shadow.bias = -0.01
+
 
 var helper = new THREE.CameraHelper( directionalLight.shadow.camera );
 scene.add( helper );
