@@ -12,7 +12,7 @@ const THRESHOLD = 0.5
  * outputs whether the point contains the root of a tree
  */
 function generate_tree(bio_val, x, y) {
-  let tree_density = Math.sqrt(-bio_val) / 5
+  let tree_density = Math.sqrt(-bio_val) / 20
   return tree_density > tree_random();
 }
 let tree_seed = 1;
@@ -23,20 +23,22 @@ function tree_random() {
 function build_leaf(world, x, y, z, layer) {
   if (layer == 0) return
   world.setVoxel(x, y, z, 5)
-  build_leaf(world, x+1, y, z+1, layer-1)
-  build_leaf(world, x+1, y, z-1, layer-1)
-  build_leaf(world, x-1, y, z+1, layer-1)
-  build_leaf(world, x-1, y, z-1, layer-1)
+  build_leaf(world, x, y, z+1, layer-1)
+  build_leaf(world, x, y, z-1, layer-1)
+  build_leaf(world, x-1, y, z, layer-1)
+  build_leaf(world, x+1, y, z, layer-1)
+  return
 }
 function build_tree(world, x, y, z, height) {
   let tree_height = height
-  for (let i = 0; i < tree_height; ++i) {
+  for (let i = 0; i < tree_height; i++) {
       if (i >= tree_height / 2) {
-          build_leaf(world, x, y+i, z, tree_height-i)
+          build_leaf(world, x, y+i+1, z, tree_height-i)
       }
       world.setVoxel(x, y+i, z, 4) //trunk
   }
   world.setVoxel(x, y+tree_height, z, 5) //leaf at top
+  return
 }
 onmessage = function(e) {
 
@@ -82,7 +84,12 @@ onmessage = function(e) {
           else if (is_desert) world.setVoxel(x, y, z, 7)
           else if (is_forest && generate_tree(bio_val, x, y)) {
             let height = 6 //a number, can possibly to be a random number?
-            build_tree(world, x, y, z, height)
+            if (y + height < WORLD_HEIGHT) {
+              build_tree(world, x, y, z, height)
+            }
+            else {
+              setVoxel(x, y, z, 1) //not suitable for building tree, build surface instead
+            }
           } 
           else world.setVoxel(x, y, z, 1);
         }
