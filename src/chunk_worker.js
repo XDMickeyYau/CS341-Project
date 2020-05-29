@@ -20,6 +20,24 @@ function tree_random() {
     var x = Math.sin(tree_seed++) * 10000;
     return x - Math.floor(x);
 }
+function build_leaf(world, x, y, z, layer) {
+  if (layer == 0) return
+  world.setVoxel(x, y, z, 5)
+  build_leaf(world, x+1, y, z+1, layer-1)
+  build_leaf(world, x+1, y, z-1, layer-1)
+  build_leaf(world, x-1, y, z+1, layer-1)
+  build_leaf(world, x-1, y, z-1, layer-1)
+}
+function build_tree(world, x, y, z, height) {
+  let tree_height = height
+  for (let i = 0; i < tree_height; ++i) {
+      if (i >= tree_height / 2) {
+          build_leaf(world, x, y+i, z, tree_height-i)
+      }
+      world.setVoxel(x, y+i, z, 4) //trunk
+  }
+  world.setVoxel(x, y+tree_height, z, 5) //leaf at top
+}
 onmessage = function(e) {
 
   const tileSize = 16;
@@ -63,7 +81,8 @@ onmessage = function(e) {
           if (is_snow) world.setVoxel(x, y, z, 6);
           else if (is_desert) world.setVoxel(x, y, z, 7)
           else if (is_forest && generate_tree(bio_val, x, y)) {
-            world.setVoxel(x, y, z, 4)
+            let height = 6 //a number, can possibly to be a random number?
+            build_tree(world, x, y, z, height)
           } 
           else world.setVoxel(x, y, z, 1);
         }
