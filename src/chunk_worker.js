@@ -3,7 +3,7 @@ import VoxelWorld from './Voxelworld.js'; //library for Voxel world
 import {perlin_noise} from './noise.js';
 import * as THREE from '../node_modules/three/build/three.module.js';//three.module.js
 const CHUNK_SIZE = 32;
-const WORLD_HEIGHT = 64;
+const WORLD_HEIGHT = 48;
 const HEIGHT_MULTIPLIER = 32;
 const THRESHOLD = 0.5
 
