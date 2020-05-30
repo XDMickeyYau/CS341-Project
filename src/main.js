@@ -37,12 +37,6 @@ const far = 1000;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 camera.position.set(WORLD_SIZE * CHUNK_SIZE / 2, WORLD_HEIGHT * .8, WORLD_SIZE * CHUNK_SIZE / 2);
 
-/*
-Orbit control
-*/
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(CHUNK_SIZE / 2, CHUNK_SIZE / 3, CHUNK_SIZE / 2);
-controls.update();
 
 // resize canvas on resize window
 window.addEventListener( 'resize', () => {
@@ -75,12 +69,28 @@ directionalLight.shadow.bias = -0.01
 //var helper = new THREE.CameraHelper( directionalLight.shadow.camera );
 //scene.add( helper );
 
-
 scene.add( directionalLight );
 
-//let pointLight = new THREE.PointLight( 0xffffff, 1 ); //point light source
-//pointLight.position.set( 25, 50, 25 ); //set light source position
-//scene.add( pointLight ); //add point light
+
+/*
+Orbit control
+*/
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(CHUNK_SIZE / 2, CHUNK_SIZE / 3, CHUNK_SIZE / 2);
+controls.update();
+
+controls.addEventListener( 'change', light_update );
+
+function light_update()
+{
+  let controltarget = controls.target;
+  directionalLight.target.position.set( controltarget.x,controltarget.y,controltarget.z );
+  directionalLight.position.set(WORLD_HEIGHT+controltarget.x,WORLD_HEIGHT+controltarget.y,WORLD_HEIGHT+controltarget.z);
+  console.log('cam target',camera.target,'light target',directionalLight.target,'light pos',directionalLight.position);
+  scene.add( directionalLight.target );
+}
+
+
 
 
 /*
@@ -260,12 +270,7 @@ function animate() {
   renderer.render( scene, camera )
 }
 
-function light_update()
-{
-  directionalLight.target.copy( controls.target );
-  directionalLight.position.set(WORLD_HEIGHT+controls.target.x,WORLD_HEIGHT+controls.target.y,WORLD_HEIGHT+controls.target.z);
-  scene.add( directionalLight.target );
-}
+
 
 animate()
 
