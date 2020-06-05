@@ -1,5 +1,4 @@
-#
-EPFL CS-341 2020 Spring Final Project
+# EPFL CS-341 2020 Spring Final Project
 
 ## Author
 Group 19: Tsz Fung YAU, Yufei WANG, Yui Chi HUNG 
